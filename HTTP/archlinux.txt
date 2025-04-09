@@ -1,0 +1,73 @@
+sudo apt update
+opcion=1
+
+while [ $opcion -eq 1 ]
+do
+	echo "Instalar servidores http"
+	echo "Opciones"
+	echo "1) Apache"
+	echo "2) Nginx"
+	echo "3) Lighttpd"
+	echo "4) Salir"
+	read -p "Elija una opcion: " opc
+
+	if [ $opc -eq 1 ]
+	then
+		sudo apt install apache2
+		sudo ufw allow 'Apache'
+		read -p "Ingrese el puerto para iniciar el servicio" puerto
+		read -p "Ingrese la ruta de la carpeta publica" carpeta
+	
+		sudo mkdir $carpeta
+		sudo touch $carpeta/index.html
+		sudo chown -R grisel $carpeta/index.html
+		sudo echo "Hola desde apache" > $carpeta/index.html
+
+		sudo sed -i "7i Listen $puerto" /etc/apache2/ports.conf
+		sudo sed -i "s/80/$puerto/g" /etc/apache2/sites-available/000-default.conf
+		sudo sed -i "s%/var/www/html%$carpeta%g" /etc/apache2/sites-available/000-default.conf
+		
+		sudo a2ensite 000-default.conf
+		sudo systemctl start apache2
+	elif [ $opc -eq 2 ]
+	then
+		sudo apt install nginx
+		read -p "Ingrese el puerto para iniciar el servicio" puerto
+		read -p "Ingrese la ruta de la carpeta publica" carpeta
+	
+		sudo mkdir $carpeta
+		sudo touch $carpeta/index.html
+		sudo chown -R grisel $carpeta/index.html
+		sudo echo "Hola desde nginx" > $carpeta/index.html
+
+		sudo sed -i "s/80/$puerto/g" /etc/nginx/sites-available/default
+		sudo sed -i "s%/var/www/html%$carpeta%g" /etc/nginx/sites-available/default
+
+		sudo systemctl restart nginx.service
+
+		opcion=1
+	elif [ $opc -eq 3 ]
+	then
+		sudo apt install lighttpd
+		read -p "Ingrese el puerto para iniciar el servicio" puerto
+		read -p "Ingrese la ruta de la carpeta publica" carpeta
+	
+		sudo mkdir $carpeta
+		sudo touch $carpeta/index.html
+		sudo chown -R grisel $carpeta/index.html
+		sudo echo "Hola desde lighttpd" > $carpeta/index.html
+
+		sudo sed -i "s/80/$puerto/g" /etc/lighttpd/lighttpd.conf
+		sudo sed -i "s%/var/www/html%$carpeta%g" /etc/lighttpd/lighttpd.conf
+
+		/etc/init.d/lighttpd restart
+
+		opcion=1
+	elif [ $opc -eq 4 ]
+	then
+		opcion=0
+	else
+		echo "La opcion ingresada no es valida. Ingrese otra opcion"
+		opcion=1
+	fi
+done
